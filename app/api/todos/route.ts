@@ -69,30 +69,39 @@ export async function POST(req: NextRequest){
     );
     }
 
-    const user =await prisma.user.findUnique({
-        where: {
-            id : userId
-        },
-        include: {todos: true}
-    })
-
-    console.log(user);
-
-    if(!user){
-        return NextResponse.json({error: "User not found"}, {status: 404})
-    }
-
-    if(!user.isSubscribed && user.todos.length >= 3){
+    try {
+        const user =await prisma.user.findUnique({
+            where: {
+                id : userId
+            },
+            include: {todos: true}
+        })
+    
+        console.log(user);
+    
+        if(!user){
+            return NextResponse.json({error: "User not found"}, {status: 404})
+        }
+    
+        if(!user.isSubscribed && user.todos.length >= 3){
+            return NextResponse.json({
+                error: 'Free users can only create upto 3 Todos. Please subscribe to our paid plan to write more todos'
+            }, {status: 401})
+        }
+    
+        const {title} = await req.json()
+    
+        const todo = await prisma.todo.create({
+            data: {title, userId},
+        })
+    
+        return NextResponse.json({message: "sucessfully create the todo"})
+    } catch (error) {
+         console.log('Error Creating the Todos', error);
         return NextResponse.json({
-            error: 'Free users can only create upto 3 Todos. Please subscribe to our paid plan to write more todos'
-        }, {status: 401})
+            error: "Internal server error"
+        })
     }
-
-    const {title} = await req.json()
-
-    const todo = await prisma.todo.create({
-        data: {title, userId},
-    })
     
 }
 

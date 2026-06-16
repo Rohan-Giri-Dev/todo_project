@@ -15,6 +15,7 @@ datasource db {
 model User {
   id               String    @id
   email            String    @unique
+  isAdmin          Boolean   @default(false)
   isSubscribed     Boolean   @default(false)
   subscriptionEnds DateTime?
   todos            Todo[]

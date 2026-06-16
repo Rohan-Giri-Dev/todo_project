@@ -1,7 +1,6 @@
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import {auth} from '@clerk/nextjs/server'
 import { prisma } from "@/lib/prisma";
-import { Select } from "radix-ui";
 
 export async function POST(){
     const {userId} = await auth()

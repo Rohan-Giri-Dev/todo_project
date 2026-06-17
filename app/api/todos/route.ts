@@ -23,7 +23,7 @@ export async function GET(req: NextRequest){
             where:{
                 userId,
                 title: {
-                    contains: search,
+                    contains: search, 
                     mode: "insensitive"
                 }
             },
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest){
             where: {
                 userId,
                 title: {
-                    contains: "search",
+                    contains: search,
                     mode: "insensitive"
                 }
             }
@@ -60,6 +60,8 @@ export async function GET(req: NextRequest){
 
 
 export async function POST(req: NextRequest){
+    // Get the logged-in user's Clerk id.
+    // If there is no userId, the request is coming from a signed-out user.
     const {userId} = await auth()
 
      if (!userId)
@@ -70,6 +72,8 @@ export async function POST(req: NextRequest){
     }
 
     try {
+        // Find the same user in our own database.
+        // We include todos because we need to know how many todos this user has.
         const user =await prisma.user.findUnique({
             where: {
                 id : userId
@@ -83,20 +87,28 @@ export async function POST(req: NextRequest){
             return NextResponse.json({error: "User not found"}, {status: 404})
         }
     
+        // Free users can create only 3 todos.
+        // Subscribed users can create more than 3.
         if(!user.isSubscribed && user.todos.length >= 3){
             return NextResponse.json({
                 error: 'Free users can only create upto 3 Todos. Please subscribe to our paid plan to write more todos'
             }, {status: 401})
         }
     
+        // Read the JSON body sent from the dashboard.
+        // Example body: { "title": "Learn Next.js" }
         const {title} = await req.json()
     
+        // Create the todo and connect it to the logged-in user.
         const todo = await prisma.todo.create({
             data: {title, userId},
         })
     
+        // Send a success response back to the dashboard.
         return NextResponse.json({message: "sucessfully create the todo"})
     } catch (error) {
+         // If anything above fails, this keeps the server from crashing
+         // and returns a clear error response to the frontend.
          console.log('Error Creating the Todos', error);
         return NextResponse.json({
             error: "Internal server error"
